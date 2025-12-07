@@ -15,8 +15,8 @@
     "explanation": "Fallback evaluation: the proper LLM call failed or is not yet configured. In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
   },
   "87fc68ed5862a28215b2a835ebcebe57098779950aab21582c4bbf0e910262c8": {
-    "score": 10,
+    "score": 5,
     "confidence": "high",
-    "explanation": "The claim that all apples are red is false, as apples come in a variety of colors including green, yellow, and even bi-colored varieties. There is substantial evidence from botany and agriculture showing the diversity of apple cultivars. Thus, the claim lacks validity based on observable facts."
+    "explanation": "The claim is false because apples come in various colors, including green, yellow, and even bi-colored varieties. While some common apple varieties are red, it is incorrect to say that all apples are red. This claim does not reflect the diversity of apple cultivars."
   }
 }

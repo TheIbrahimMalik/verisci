@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+from types import SimpleNamespace  # for SpoonOS message objects
 
 from spoon_ai.llm import LLMManager, ConfigurationManager
 from spoon_ai.tools.base import BaseTool
@@ -41,15 +42,23 @@ async def evaluate_claim_with_spoon(claim: str) -> dict:
     config_manager = ConfigurationManager()
     llm_manager = LLMManager(config_manager)
 
+    # Messages as simple dicts (used for direct OpenAI call)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Scientific claim: {claim}"},
     ]
 
+    # Messages as objects with .role and .content (for SpoonOS path, to avoid
+    # the `'dict' object has no attribute "role"` error in some adapters).
+    spoon_messages = [
+        SimpleNamespace(role="system", content=SYSTEM_PROMPT),
+        SimpleNamespace(role="user", content=f"Scientific claim: {claim}"),
+    ]
+
     # 1) Primary path: SpoonOS -> OpenAI via LLMManager
     try:
         print("\n[SpoonOS] Calling LLMManager.chat(...) via unified protocol layer...")
-        response = await llm_manager.chat(messages)
+        response = await llm_manager.chat(spoon_messages)
         content = getattr(response, "content", None) or str(response)
         data = json.loads(content)
 
@@ -112,8 +121,9 @@ class StoreEvaluationTool(BaseTool):
     """
     Simple SpoonOS tool that 'stores' a VeriSci evaluation.
 
-    For the hackathon prototype, this tool simply logs the result to stdout.
-    In a fuller version, it could write to a database, file, or external storage.
+    For the hackathon prototype, this tool logs the result and writes it
+    to a local JSON file. In a fuller version, it could write to a database,
+    file, or external storage.
     """
     name: str = "store_evaluation"
     description: str = "Store a scientific claim evaluation keyed by its hash."
@@ -191,7 +201,6 @@ class StoreEvaluationTool(BaseTool):
             print(f"[StoreEvaluationTool] Failed to write to local store: {type(e).__name__}: {e}")
             # Still return a value so the agent can continue.
             return "error"
-
 
 
 def submit_to_neo_stub(claim_hash: str, score: int, confidence: str, explanation: str) -> None:
