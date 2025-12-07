@@ -1,0 +1,7 @@
+{
+  "016c5cd65fc7a11c9ef0a9382e39902fcfd5a42c833ae7868125de45ca7c0235": {
+    "score": 60,
+    "confidence": "medium",
+    "explanation": "Fallback evaluation: the proper LLM call failed or is not yet configured. In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
+  }
+}

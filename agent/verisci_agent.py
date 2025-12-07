@@ -114,15 +114,50 @@ class StoreEvaluationTool(BaseTool):
         explanation: str,
     ) -> str:
         """
-        For now, just print the stored data.
-        This demonstrates tool invocation and basic handling.
+        Store the evaluation locally in a JSON file.
+
+        For the hackathon prototype, this demonstrates a concrete storage
+        mechanism behind the tool. In a fuller version, this could be swapped
+        for a database or decentralised storage.
         """
         print("\n[StoreEvaluationTool] Storing evaluation:")
         print(f"  claim_hash:  {claim_hash}")
         print(f"  score:       {score}")
         print(f"  confidence:  {confidence}")
         print(f"  explanation: {explanation[:120]}...")
-        return "stored"
+
+        # Simple local JSON store: data/verisci_store.json
+        try:
+            import os
+
+            os.makedirs("data", exist_ok=True)
+            store_path = os.path.join("data", "verisci_store.json")
+
+            # Load existing store if present
+            if os.path.exists(store_path):
+                with open(store_path, "r", encoding="utf-8") as f:
+                    store = json.load(f)
+            else:
+                store = {}
+
+            # Update entry for this claim
+            store[claim_hash] = {
+                "score": score,
+                "confidence": confidence,
+                "explanation": explanation,
+            }
+
+            # Write back to disk
+            with open(store_path, "w", encoding="utf-8") as f:
+                json.dump(store, f, indent=2)
+
+            print("[StoreEvaluationTool] Stored evaluation in data/verisci_store.json.")
+            return "stored"
+        except Exception as e:
+            print(f"[StoreEvaluationTool] Failed to write to local store: {type(e).__name__}: {e}")
+            # Still return a value so the agent can continue.
+            return "error"
+
 
 
 def submit_to_neo_stub(claim_hash: str, score: int, confidence: str, explanation: str) -> None:
