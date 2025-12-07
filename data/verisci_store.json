@@ -3,5 +3,20 @@
     "score": 60,
     "confidence": "medium",
     "explanation": "Fallback evaluation: the proper LLM call failed or is not yet configured. In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
+  },
+  "c7b97225123fb44195026c3c73e151c772f7cc5190ad65b2e68f5b7c3bc64e41": {
+    "score": 60,
+    "confidence": "medium",
+    "explanation": "Fallback evaluation: the proper LLM call failed or is not yet configured. In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
+  },
+  "353ce1bf3629f18eb484f1e46a4ce5173419379532ee47807b94871abec32765": {
+    "score": 60,
+    "confidence": "medium",
+    "explanation": "Fallback evaluation: the proper LLM call failed or is not yet configured. In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
+  },
+  "87fc68ed5862a28215b2a835ebcebe57098779950aab21582c4bbf0e910262c8": {
+    "score": 10,
+    "confidence": "high",
+    "explanation": "The claim that all apples are red is false, as apples come in a variety of colors including green, yellow, and even bi-colored varieties. There is substantial evidence from botany and agriculture showing the diversity of apple cultivars. Thus, the claim lacks validity based on observable facts."
   }
 }

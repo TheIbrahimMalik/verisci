@@ -31,8 +31,12 @@ async def evaluate_claim_with_spoon(claim: str) -> dict:
     """
     Use SpoonOS's unified LLM manager to evaluate a scientific claim.
 
-    If configuration / API keys are missing or the LLM call fails,
-    we fall back to a stubbed response so the demo still runs end-to-end.
+    Flow:
+      1) Try Agent -> SpoonOS -> LLM (OpenAI) via LLMManager.chat(...)
+      2) If that fails (e.g. ProviderError), fall back to a direct OpenAI call
+         using the same messages.
+      3) If that also fails, fall back to a deterministic stub so the demo
+         always remains functional.
     """
     config_manager = ConfigurationManager()
     llm_manager = LLMManager(config_manager)
@@ -42,36 +46,66 @@ async def evaluate_claim_with_spoon(claim: str) -> dict:
         {"role": "user", "content": f"Scientific claim: {claim}"},
     ]
 
-    print("\n[SpoonOS] Calling LLMManager.chat(...) via unified protocol layer...")
+    # 1) Primary path: SpoonOS -> OpenAI via LLMManager
     try:
+        print("\n[SpoonOS] Calling LLMManager.chat(...) via unified protocol layer...")
         response = await llm_manager.chat(messages)
-        content = getattr(response, "content", str(response))
+        content = getattr(response, "content", None) or str(response)
         data = json.loads(content)
+
+        # Normalise and return
+        data.setdefault("score", 50)
+        data.setdefault("confidence", "low")
+        data.setdefault("explanation", "No explanation provided.")
+        data.setdefault("factors", [])
+
+        return data
+
     except Exception as e:
-        print(f"[SpoonOS] LLM call failed or is not yet configured: {type(e).__name__}")
-        print("[SpoonOS] Falling back to stubbed evaluation to keep the demo functional.")
+        print(f"[SpoonOS] LLM call failed: {type(e).__name__}: {e}")
+        print("[SpoonOS] Attempting direct OpenAI fallback...\n")
 
-        data = {
-            "score": 60,
-            "confidence": "medium",
-            "explanation": (
-                "Fallback evaluation: the proper LLM call failed or is not yet configured. "
-                "In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
-            ),
-            "factors": [
-                "Claim length and specificity (heuristic)",
-                "General plausibility based on common scientific understanding (stub)",
-                f"Internal error: {type(e).__name__}",
-            ],
-        }
+        # 2) Secondary path: direct OpenAI call using the same messages
+        try:
+            from openai import OpenAI
 
-    # Ensure all expected keys exist
-    data.setdefault("score", 50)
-    data.setdefault("confidence", "low")
-    data.setdefault("explanation", "No explanation provided.")
-    data.setdefault("factors", [])
+            client = OpenAI()  # uses OPENAI_API_KEY from environment
 
-    return data
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+            )
+            content = resp.choices[0].message.content
+            data = json.loads(content)
+
+            # Normalise
+            data.setdefault("score", 50)
+            data.setdefault("confidence", "low")
+            data.setdefault("explanation", "No explanation provided.")
+            data.setdefault("factors", [])
+
+            print("[OpenAI] Direct call succeeded.")
+            return data
+
+        except Exception as e2:
+            print(f"[OpenAI] Direct call failed, falling back to stub: {type(e2).__name__}: {e2}")
+
+            # 3) Last-resort stub so the demo never breaks
+            data = {
+                "score": 60,
+                "confidence": "medium",
+                "explanation": (
+                    "Fallback evaluation: both SpoonOS and direct LLM calls failed or "
+                    "are not yet fully configured. In a full deployment this would "
+                    "always be replaced by successful LLM reasoning."
+                ),
+                "factors": [
+                    "Claim length and specificity (heuristic)",
+                    "General plausibility based on common scientific understanding (stub)",
+                    f"Internal error chain: {type(e).__name__} -> {type(e2).__name__}",
+                ],
+            }
+            return data
 
 
 class StoreEvaluationTool(BaseTool):
