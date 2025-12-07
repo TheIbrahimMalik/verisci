@@ -18,5 +18,25 @@
     "score": 5,
     "confidence": "high",
     "explanation": "This claim is incorrect as apples come in various colors, including green, yellow, and purple, in addition to red. The diversity in apple color is well-documented in agricultural science. Therefore, the statement is a definitive falsehood."
+  },
+  "c802899b4665f63a450646e89585dda8e29ef749e7760087b249a4c3c0e14a21": {
+    "score": 100,
+    "confidence": "high",
+    "explanation": "The statement '1+1=2' is a fundamental truth in mathematics. It is universally accepted and has been rigorously proven within the field of arithmetic. This claim is a basic axiomatic principle and forms the foundation for further mathematical reasoning."
+  },
+  "d81471764dcc4c6b8ae95f419959e87e8242bef46cc1dad638c9ffcd54f3404d": {
+    "score": 100,
+    "confidence": "high",
+    "explanation": "The claim that apples are sometimes red is valid as red is one of the common colors of apples. There are numerous apple varieties, such as Red Delicious and Fuji, which exhibit red pigmentation. Thus, this claim is both accurate and widely observed in nature."
+  },
+  "4f3dcceb9df0ff40597b88db321623328410e8a758c98344313cb11ff4d5f5c6": {
+    "score": 10,
+    "confidence": "low",
+    "explanation": "The claim lacks scientific support as it makes a broad generalization about hair dye and its connection to species. While humans are the primary users of hair dye, there are no studies confirming that all creatures with dyed hair are exclusively human. Other species may also exhibit dyed fur or features through human intervention or naturally occurring pigments."
+  },
+  "b8d33c120addd4d15c17818aba276641da8a0a18836660adf2348eea5bec69bb": {
+    "score": 0,
+    "confidence": "high",
+    "explanation": "The claim that 1+1=0 is mathematically incorrect under standard arithmetic principles. In the context of conventional mathematics, 1 plus 1 equals 2. Therefore, this claim lacks any validity."
   }
 }

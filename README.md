@@ -134,7 +134,7 @@ Combined with the **confidence value**, this forms a compact trust signal suitab
 
 ## 📁 Repository Structure
 
-```json
+```text
 verisci/
 │
 ├── agent/
