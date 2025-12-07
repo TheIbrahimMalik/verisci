@@ -1,0 +1,12 @@
+version: "1.0"
+
+agent:
+  name: verisci-agent
+  description: "VeriSci: scientific claim credibility agent using SpoonOS + Storage + Neo."
+  entrypoint: verisci_agent.py
+
+workflow:
+  steps:
+    - id: evaluate_claim
+      description: "Evaluate a scientific claim and store the result."
+      run: python3 agent/verisci_agent.py
