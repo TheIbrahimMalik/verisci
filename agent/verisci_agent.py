@@ -1,83 +1,187 @@
+import asyncio
 import hashlib
 import json
 
-# These imports assume you're using SpoonOS Python SDK structure.
-# If the exact paths differ, we can tweak later; for now this clearly shows intent.
-from spoon_ai.llm import LLM
-from spoon_ai.tools.storage import KVStorage
+from spoon_ai.llm import LLMManager, ConfigurationManager
+from spoon_ai.tools.base import BaseTool
+
+
+SYSTEM_PROMPT = """
+You are VeriSci, an AI assistant that evaluates the credibility of scientific claims.
+
+You MUST respond with valid JSON only, using this schema:
+{
+  "score": 0-100 integer,
+  "confidence": "low" | "medium" | "high",
+  "explanation": string (max 3 sentences),
+  "factors": [string, ...]  // 3–5 short points
+}
+"""
 
 
 def hash_claim(claim_text: str) -> str:
+    """
+    Compute a deterministic hash for the claim so we can
+    use it as a key for storage and on-chain indexing.
+    """
     return hashlib.sha256(claim_text.encode("utf-8")).hexdigest()
 
 
-def evaluate_claim_with_spoon(claim: str) -> dict:
+async def evaluate_claim_with_spoon(claim: str) -> dict:
     """
-    Use SpoonOS unified LLM interface to evaluate a scientific claim.
-    Returns structured JSON-like dict.
+    Use SpoonOS's unified LLM manager to evaluate a scientific claim.
+
+    If configuration / API keys are missing or the LLM call fails,
+    we fall back to a stubbed response so the demo still runs end-to-end.
     """
-    llm = LLM(provider="openai", model="gpt-4.1")  # adjust model/provider based on hackathon credits
+    config_manager = ConfigurationManager()
+    llm_manager = LLMManager(config_manager)
 
-    prompt = f"""
-You are VeriSci, an AI assistant that evaluates the credibility of scientific claims.
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Scientific claim: {claim}"},
+    ]
 
-Return ONLY valid JSON with the following keys:
-- "score": integer 0-100 (0 = not credible at all, 100 = very credible)
-- "confidence": one of ["low", "medium", "high"]
-- "explanation": string, max 3 sentences, explaining your reasoning
-- "factors": array of 3-5 short strings listing key factors you considered
-
-Scientific claim: {claim}
-"""
-
-    # Depending on SpoonOS API, this may be llm.run(prompt) or similar.
-    # We'll assume it returns an object with a .text attribute containing the model output.
-    response = llm.run(prompt)
-    raw_text = getattr(response, "text", str(response))
-
+    print("\n[SpoonOS] Calling LLMManager.chat(...) via unified protocol layer...")
     try:
-        data = json.loads(raw_text)
-    except json.JSONDecodeError:
-        # Fallback: wrap raw_text into a dict so we don't crash.
+        response = await llm_manager.chat(messages)
+        content = getattr(response, "content", str(response))
+        data = json.loads(content)
+    except Exception as e:
+        print(f"[SpoonOS] LLM call failed or is not yet configured: {type(e).__name__}")
+        print("[SpoonOS] Falling back to stubbed evaluation to keep the demo functional.")
+
         data = {
-            "score": 50,
-            "confidence": "low",
-            "explanation": "Model returned non-JSON output, using fallback.",
-            "factors": [raw_text[:200]],
+            "score": 60,
+            "confidence": "medium",
+            "explanation": (
+                "Fallback evaluation: the proper LLM call failed or is not yet configured. "
+                "In the full system, this would be replaced by SpoonOS-managed LLM reasoning."
+            ),
+            "factors": [
+                "Claim length and specificity (heuristic)",
+                "General plausibility based on common scientific understanding (stub)",
+                f"Internal error: {type(e).__name__}",
+            ],
         }
+
+    # Ensure all expected keys exist
+    data.setdefault("score", 50)
+    data.setdefault("confidence", "low")
+    data.setdefault("explanation", "No explanation provided.")
+    data.setdefault("factors", [])
 
     return data
 
 
-def persist_result_with_spoon_tool(claim_hash: str, result: dict):
+class StoreEvaluationTool(BaseTool):
     """
-    Use SpoonOS Storage Tool (KV) to save intermediate agent state and results.
-    This satisfies the 'use at least one tool' requirement.
+    Simple SpoonOS tool that 'stores' a VeriSci evaluation.
+
+    For the hackathon prototype, this tool simply logs the result to stdout.
+    In a fuller version, it could write to a database, file, or external storage.
     """
-    store = KVStorage(namespace="verisci")
-    store.put(claim_hash, result)
-    # You could also later read it via store.get(claim_hash)
-    return True
+    name: str = "store_evaluation"
+    description: str = "Store a scientific claim evaluation keyed by its hash."
+    parameters: dict = {
+        "type": "object",
+        "properties": {
+            "claim_hash": {
+                "type": "string",
+                "description": "SHA-256 hash of the scientific claim text."
+            },
+            "score": {
+                "type": "integer",
+                "description": "Credibility score (0–100)."
+            },
+            "confidence": {
+                "type": "string",
+                "description": "Confidence level: low, medium, or high."
+            },
+            "explanation": {
+                "type": "string",
+                "description": "Short explanation of the evaluation."
+            },
+        },
+        "required": ["claim_hash", "score", "confidence", "explanation"],
+    }
+
+    async def execute(
+        self,
+        claim_hash: str,
+        score: int,
+        confidence: str,
+        explanation: str,
+    ) -> str:
+        """
+        For now, just print the stored data.
+        This demonstrates tool invocation and basic handling.
+        """
+        print("\n[StoreEvaluationTool] Storing evaluation:")
+        print(f"  claim_hash:  {claim_hash}")
+        print(f"  score:       {score}")
+        print(f"  confidence:  {confidence}")
+        print(f"  explanation: {explanation[:120]}...")
+        return "stored"
 
 
-def run_agent():
+def submit_to_neo_stub(claim_hash: str, score: int, confidence: str, explanation: str) -> None:
+    """
+    Stub for submitting the evaluation to the Neo ClaimRegistry smart contract.
+
+    In the full implementation, this would:
+    - Construct and sign a transaction
+    - Call submitClaim(claim_hash, score, confidence, explanation)
+      on the deployed ClaimRegistry contract on Neo testnet.
+    """
+    print("\n[NeoStub] Preparing to submit to ClaimRegistry:")
+    print(f"  claim_hash:  {claim_hash}")
+    print(f"  score:       {score}")
+    print(f"  confidence:  {confidence}")
+    print(f"  explanation: {explanation[:120]}...")
+    print("[NeoStub] (Stub) This is where a real Neo RPC call would be made.")
+
+
+async def agent_run() -> None:
     claim = input("Enter a scientific claim: ")
 
     claim_hash = hash_claim(claim)
     print(f"\n[VeriSci] Claim hash: {claim_hash}")
 
     print("\n[VeriSci] Evaluating claim via SpoonOS LLM...")
-    result = evaluate_claim_with_spoon(claim)
+    result = await evaluate_claim_with_spoon(claim)
 
-    print("\n[VeriSci] Evaluation result:")
+    print("\n[VeriSci] Evaluation result (structured):")
     print(json.dumps(result, indent=2))
 
-    print("\n[VeriSci] Persisting result using SpoonOS Storage tool...")
-    persist_result_with_spoon_tool(claim_hash, result)
-    print("[VeriSci] Stored in KVStorage under that hash.")
+    # Extract fields safely
+    score = int(result.get("score", 50))
+    confidence = str(result.get("confidence", "low"))
+    explanation = str(result.get("explanation", ""))
 
-    print("\n[VeriSci] (Next step) Write this result to Neo smart contract ClaimRegistry.")
+    # Use our Spoon tool to 'store' the evaluation
+    tool = StoreEvaluationTool()
+    try:
+        await tool.execute(
+            claim_hash=claim_hash,
+            score=score,
+            confidence=confidence,
+            explanation=explanation,
+        )
+        print("\n[VeriSci] Evaluation passed through StoreEvaluationTool successfully.")
+    except Exception as e:
+        print(f"\n[VeriSci] Failed to store evaluation via tool: {type(e).__name__}: {e}")
+
+    # Neo submission stub (explained clearly in docs and video)
+    submit_to_neo_stub(claim_hash, score, confidence, explanation)
+
+    print(
+        "\n[VeriSci] End of agent run."
+        "\n  - SpoonOS LLM flow demonstrated (with fallback if unconfigured)."
+        "\n  - SpoonOS Tool (StoreEvaluationTool) invoked with basic error handling."
+        "\n  - Neo submission stub clearly indicating where on-chain integration occurs."
+    )
 
 
 if __name__ == "__main__":
-    run_agent()
+    asyncio.run(agent_run())
