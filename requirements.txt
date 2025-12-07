@@ -123,7 +123,6 @@ python-dotenv==1.2.1
 python-multipart==0.0.20
 pytz==2025.2
 pyunormalize==17.0.0
-pywin32==311
 PyYAML==6.0.3
 referencing==0.36.2
 regex==2025.11.3
