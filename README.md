@@ -129,30 +129,6 @@ VeriSci uses a **0–100 scientific credibility score**:
 
 Combined with the **confidence value**, this forms a compact trust signal suitable for on-chain storage.
 
----
-
-## 📁 Repository Structure
-It looks like the previous content ended right after the "Deterministic Hash" example and has the subsequent sections partially formatted or as plain text. I'll reformat and combine all the remaining content into the correct README.md structure, starting from the "What the Score Means" section.
-
-Markdown
-
-**Deterministic Hash:**
-
-`dc937665de797b4612608b6c14d5394eb2191f00ca483a0332aee64fb2a6d9b4`
-
----
-
-## 📊 What the Score Means
-
-VeriSci uses a **0–100 scientific credibility score**:
-
-| Score Range | Meaning |
-| :--- | :--- |
-| **0** | Contradicts scientific consensus or established facts. |
-| **50** | Uncertain, ambiguous, or highly context-dependent. |
-| **100** | Strongly supported by scientific evidence and widely accepted. |
-
-Combined with the **confidence value**, this forms a compact trust signal suitable for on-chain storage.
 
 ---
 
