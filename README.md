@@ -156,6 +156,77 @@ verisci/
 
 ---
 
+## 🖥️ Running VeriSci Locally
+
+You can run VeriSci fully locally, both the **agent** and the **Streamlit UI**.
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/TheIbrahimMalik/verisci.git
+cd verisci
+```
+
+### 2. Create a virtual environment
+```bash
+python -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\activate      # Windows
+```
+
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+⚠️ Note:
+`pywin32` is Windows-only, it may not install on Linux hosts but works perfectly on Windows.
+It does not affect the core logic.
+
+### 4. Add your OpenAI API key
+
+Create a `.env` in the project root:
+
+```bash
+OPENAI_API_KEY=your_key_here
+```
+
+
+Or export it in your terminal:
+
+```bash
+export OPENAI_API_KEY="your_key_here"     # macOS/Linux
+setx OPENAI_API_KEY "your_key_here"       # Windows PowerShell
+```
+
+### 5. Run the agent (CLI)
+```bash
+python agent/verisci_agent.py
+```
+
+You will be prompted:
+
+```css
+Enter a scientific claim:
+```
+
+The agent will:
+- hash the claim
+- call SpoonOS → OpenAI
+- fall back if needed
+- store results in `data/verisci_store.json`
+- simulate on-chain submission
+
+### 6. Run the Streamlit UI locally
+```bash
+streamlit run ui/app.py
+```
+
+Your local UI will start on:
+
+📍 http://localhost:8501
+
+---
+
 ## 🚀 Future Work
 
 We plan to significantly extend VeriSci's capabilities post-hackathon:
